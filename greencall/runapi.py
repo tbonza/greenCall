@@ -1,23 +1,26 @@
 """ runapi.py
 
-Makes asyncronous calls to API and writes results to MongoDb
+Makes asyncronous calls to an API client
 
 """
 import asyncio
 import aiohttp
 import logging
 import signal
-
-#from src.clients import googleSearch
-from src.csvclean import goodData
-from src.database import asyncMongo
+import json
 
 class Runapi(object):
-    """ Make async requests to one API """
+    """ Make async requests to one API 
+    
+    Args:
+        inputdict: { unique id : query term }
+        loop: asyncio oject, from Python3 library
+        client: function, API client
+    """
 
     def __init__(self, maxtasks=100):
         self.client = client
-        self.csvfile = csvfile
+        self.inputdict = inputdict
         self.loop = loop
         self.todo = set()
         self.busy = set()
@@ -25,8 +28,39 @@ class Runapi(object):
         self.tasks = set()
         self.sem = asyncio.Semaphore(maxtasks)
 
-        # connector stores cookies between requests and uses connection pool
-        self.connector = aiohttp.TCPConnector(share_cookies=True, loop=loop)
+        # connector stores cookies between requests using connection pool
+        self.connector = aiohttp.TCPConnector(share_cookies=True,
+                                              loop=loop)
+
+    def inputQueries(self, inputdict= self.inputdict):
+        """ Input for API crawler
+
+        Args:
+            inputdict: key   - str, unique id associated with each query
+                       value - str, query term to be fed to API
+
+        Returns:
+            dict, will return inputdict if formatted correctly but raise
+            error otherwise.
+        """
+        return inputdict
+
+    @asyncio.coroutine
+    def outputResult(self, unique_id, query_term, result):
+        """ Outputs the result for one (1) query as a json object 
+
+        Args:
+            unique_id: str, unique id associated with the query
+            query_term: str, the actual term that was queried
+            result: dict, output from api request
+
+        Returns:
+            json list, 
+               (unique id, query term, 
+                output from API request as json dict)
+        """
+        return json.dumps((unique_id, query_term, result))
+        
 
     @asyncio.coroutine
     def run(self):
@@ -39,7 +73,7 @@ class Runapi(object):
         self.loop.stop()
 
     @asyncio.coroutine
-    def addRequests(self):
+    def addRequests(self, ammo):
         """ Load queries 
 
         Args:
@@ -49,7 +83,7 @@ class Runapi(object):
             list of tuples: (unique_id, query_term)
 
         """
-        ammo = goodData(csv_file)
+        ammo = self.inputQueries(inputdict= self.inputdict)
         for uuid in ammo.keys():
             if (uuid not in self.busy and
                 uuid not in self.done and
@@ -84,19 +118,20 @@ class Runapi(object):
             self.done[uuid] = False
         else:
             if (resp.status == 200):
-                # good spot to write to database
-                pass
+                self.outputResult(unique_id = uuid,
+                                  query_term = ammo[uuid],
+                                  result = resp) #should be a dict
 
             resp.close()
             self.done[uuid] = True
 
         self.busy.remove(uuid)
 
-def apiFetcher(client, csvfile, loglocation='runapi'):
+def apiFetcher(client, inputdict, loglocation='runapi'):
     enable_log(loglocation)
     loop = asyncio.get_event_loop()
 
-    c = Runapi(client, csvfile, loop)
+    c = Runapi(client, inputdict, loop)
     asyncio.Task(c.run())
 
     try:
