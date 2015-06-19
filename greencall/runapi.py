@@ -18,7 +18,7 @@ class Runapi(object):
         client: function, API client
     """
 
-    def __init__(self, maxtasks=100):
+    def __init__(self, client, inputdict, loop, maxtasks=100):
         self.client = client
         self.inputdict = inputdict
         self.loop = loop
@@ -32,7 +32,7 @@ class Runapi(object):
         self.connector = aiohttp.TCPConnector(share_cookies=True,
                                               loop=loop)
 
-    def inputQueries(self, inputdict= self.inputdict):
+    def inputQueries(self):
         """ Input for API crawler
 
         Args:
@@ -43,7 +43,7 @@ class Runapi(object):
             dict, will return inputdict if formatted correctly but raise
             error otherwise.
         """
-        return inputdict
+        return self.inputdict
 
     @asyncio.coroutine
     def outputResult(self, unique_id, query_term, result):
@@ -83,7 +83,7 @@ class Runapi(object):
             list of tuples: (unique_id, query_term)
 
         """
-        ammo = self.inputQueries(inputdict= self.inputdict)
+        ammo = self.inputQueries()
         for uuid in ammo.keys():
             if (uuid not in self.busy and
                 uuid not in self.done and
