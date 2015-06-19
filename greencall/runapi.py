@@ -9,6 +9,8 @@ import logging
 import signal
 import json
 
+from greencall.utils.utilityBelt import enable_log
+
 class Runapi(object):
     """ Make async requests to one API 
     
@@ -22,12 +24,7 @@ class Runapi(object):
         self.client = client
         self.inputdict = inputdict
         self.loop = loop
-        self.todo = set()
-        self.busy = set()
-        self.done = {}
-        self.tasks = set()
-        self.sem = asyncio.Semaphore(maxtasks)
-
+   
         # connector stores cookies between requests using connection pool
         self.connector = aiohttp.TCPConnector(share_cookies=True,
                                               loop=loop)
@@ -45,7 +42,6 @@ class Runapi(object):
         """
         return self.inputdict
 
-    @asyncio.coroutine
     def outputResult(self, unique_id, query_term, result):
         """ Outputs the result for one (1) query as a json object 
 
@@ -64,16 +60,12 @@ class Runapi(object):
 
     @asyncio.coroutine
     def run(self):
-        asyncio.Task() # set initial work
-        yield from asyncio.sleep(1)
-        while self.busy:
-            yield from asyncio.sleep(1)
-
+        asyncio.Task(self.addRequests()) # set initial work
         self.connector.close()
         self.loop.stop()
 
     @asyncio.coroutine
-    def addRequests(self, ammo):
+    def addRequests(self):
         """ Load queries 
 
         Args:
