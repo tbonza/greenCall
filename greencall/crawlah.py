@@ -30,7 +30,7 @@ maxRun = 10
 #  'http://www.google.com',
 #  ]
 
-with open('greencall/example.json', 'r') as infile:
+with open('examples/testing.json', 'r') as infile:
     wtf = json.load(infile)
 infile.close()
 
