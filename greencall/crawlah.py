@@ -5,6 +5,8 @@ Makes API requests in a timely manner then writes out the data
 """
 import sys
 import json
+import logging
+from time import gmtime, strftime
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredSemaphore
@@ -13,6 +15,13 @@ from twisted.web.client import Agent
 
 maxRun = 10
 
+def enable_log(log_name):
+    """ Enable logs written to file """
+    log_name = strftime("%d_%b_%Y_%H%M%S", gmtime()) + log_name
+    logging.basicConfig(filename= log_name + ".log",
+                        level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s' +\
+                        ' %(message)s')
 
 class ResourcePrinter(Protocol):
     def __init__(self, finished, count):
@@ -24,10 +33,12 @@ class ResourcePrinter(Protocol):
 
         if self.finished:
             self.output.write(data)
+            logging.info('dataRecieved written for: %d' % self.count)
         
         return data
 
     def connectionLost(self, reason):
+        logging.warn('connectionLost for %d' % self.count)
         self.finished.callback(None)
 
         
@@ -41,44 +52,50 @@ class ResourceOutput(object):
         return finished
 
     def printError(self, failure):
+        logging.error(sys.stderr, failure)
         print >>sys.stderr, failure
 
     def stop(self, result):
+        logging.info('reactor stopped')
         reactor.stop()
 
         
-class AgentMaker(PersistData):
+class AgentMaker(object):
 
-    def __init__(self):
-        self.data = {}
+    def __init__(self, sites):
         self.ro = ResourceOutput()
+        self.sites = sites
 
     def manageAgents(self):
 
-        sites = ["https://www.google.com/", "https://www.yahoo.com/",
-                 "https://www.google.com/", "https://www.yahoo.com/"]
-                 #"http://www.cnn.com/"]#, "http://www.msnbc.com/"]
-
         count = 0
         sem = DeferredSemaphore(maxRun)
-        
-        while count < len(sites):
+
+        logging.info('manageAgents loop START')
+        while count < len(self.sites):
             agent = Agent(reactor)
-            d = sem.run(agent.request, 'GET', sites[count])
+            d = sem.run(agent.request, 'GET', self.sites[count])
             d.addCallback(self.ro.printResource, count)
             d.addErrback(self.ro.printError)
             count += 1
 
             logging.info("Mischief count: %d" % count)
 
+        logging.info('manageAgents loop END')
         self.mischiefManaged(d)
 
     def mischiefManaged(self, d):
         d.addBoth(self.ro.stop)
 
 
-        
-am = AgentMaker()
+enable_log('crawlah')
+
+with open('examples/test.json','r') as infile:
+    sites = json.load(infile)
+    infile.close()
+
+
+am = AgentMaker(sites)
 am.manageAgents()
 
 reactor.run()
