@@ -3,17 +3,23 @@
 Makes API requests in a timely manner then writes out the data
 
 """
+import sys
+import json
+import codecs
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred
+from twisted.internet.defer import DeferredSemaphore
 from twisted.internet.protocol import Protocol
 from twisted.web.client import Agent
+
 
 class ResourcePrinter(Protocol):
     def __init__(self, finished, count):
         self.finished = finished
         self.count = count
-        self.output = open('out' + str(self.count) +'_test.json', 'w')
+        self.output = open('output/out' + \
+                           str(self.count) +'_test.json', 'w')
 
     def dataReceived(self, data):
 
@@ -44,20 +50,22 @@ class ResourceOutput(object):
         
 class AgentMaker(object):
 
-    def __init__(self):
-        self.data = {}
+    def __init__(self, sites):
         self.ro = ResourceOutput()
+        self.sites = sites
 
     def manageAgents(self):
 
-        sites = ["https://www.google.com/", "https://www.yahoo.com/",
-                 "https://www.google.com/", "https://www.yahoo.com/"]
+        #sites = ["https://www.google.com/", "https://www.yahoo.com/",
+         #        "https://www.google.com/", "https://www.yahoo.com/"]
                  #"http://www.cnn.com/"]#, "http://www.msnbc.com/"]
 
         count = 0
+        #deferreds = []
+        sem = DeferredSemaphore(10)
         while count < len(sites):
             agent = Agent(reactor)
-            d = agent.request('GET', sites[count])
+            d = sem.run(agent.request('GET', sites[count]))
             d.addCallback(self.ro.printResource, count)
             d.addErrback(self.ro.printError)
             count += 1
@@ -73,11 +81,21 @@ class AgentMaker(object):
         d.addBoth(self.ro.stop)
 
 
-        
-am = AgentMaker()
-am.manageAgents()
 
-reactor.run()
+if __name__ == "__main__":
+
+    with open('greencall/example.json', 'r') as infile:
+        wtf = json.load(infile)
+    infile.close()
+
+    sites = []
+    for site in wtf:
+        sites.append(codecs.encode(site))
+        
+    am = AgentMaker(sites)
+    am.manageAgents()
+    
+    reactor.run()
 
 
 
