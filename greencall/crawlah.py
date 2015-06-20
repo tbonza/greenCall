@@ -13,21 +13,6 @@ from twisted.web.client import Agent
 
 maxRun = 10
 
-class PersistData(object):
-
-    def __init__(self):
-        self.persistd = {}
-
-    def write(self, key, value):
-        self.persistd[key] = value
-
-    def read(self):
-        return self.persistd
-
-    def write_to_file(self, filepath):
-        with open(filepath, 'w') as infile:
-            json.dump(self.persistd, filepath)
-        infile.close()
 
 class ResourcePrinter(Protocol):
     def __init__(self, finished, count):
@@ -80,16 +65,11 @@ class AgentMaker(PersistData):
         while count < len(sites):
             agent = Agent(reactor)
             d = sem.run(agent.request, 'GET', sites[count])
-            #d = agent.request('GET', sites[count])
             d.addCallback(self.ro.printResource, count)
             d.addErrback(self.ro.printError)
             count += 1
 
-            print "\n\nMischief count: %d" % count
-            #print "\n\nData_managed: %d" % len(self.data)
-
-        #print "muhData ", str(self.data.keys())
-        #print "sanity check: ", self.ro.data[1]
+            logging.info("Mischief count: %d" % count)
 
         self.mischiefManaged(d)
 
