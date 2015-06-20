@@ -15,6 +15,15 @@ from twisted.internet.protocol import Protocol
 from twisted.web.client import Agent
 
 maxRun = 10
+# use persistent connections: HTTPConnectionPool
+# don't return the body incrementally: readBody
+# catch a ResponseDone exception so we know what's working
+# Note that each request will only be retried once. (automatic)
+  # so use the ResponseDone exception to find out who needs to be rerun.
+
+# try what you have with the Google API first before making any additional
+# improvements. I'm concerned that you'll get it perfect only to have things
+# break again.
 
 def enable_log(log_name):
     """ Enable logs written to file """
@@ -38,6 +47,7 @@ class ResourcePrinter(Protocol):
         return data
 
     def connectionLost(self, reason):
+        logging.warn("connectionLost: %d" % self.count)
         self.finished.callback(None)
 
         
