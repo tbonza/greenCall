@@ -3,99 +3,76 @@
 Makes API requests in a timely manner then writes out the data
 
 """
-import sys
 import json
 import codecs
+import logging
+from time import gmtime, strftime
 
-from twisted.internet import reactor
-from twisted.internet.defer import Deferred
-from twisted.internet.defer import DeferredSemaphore
-from twisted.internet.protocol import Protocol
-from twisted.web.client import Agent
+from twisted.internet import defer, reactor
+from twisted.web.client import getPage
 
+#from greencall.utils import utilityBelt
 
-class ResourcePrinter(Protocol):
-    def __init__(self, finished, count):
-        self.finished = finished
-        self.count = count
-        self.output = open('output/out' + \
-                           str(self.count) +'_test.json', 'w')
+def enable_log(log_name):
+    """ Enable logs written to file """
+    log_name = strftime("%d_%b_%Y_%H%M%S", gmtime()) + log_name
+    logging.basicConfig(filename= log_name + ".log",
+                        level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s' +\
+                        ' %(message)s')
 
-    def dataReceived(self, data):
+ 
+maxRun = 10
+ 
+#urls = [
+#  'http://twistedmatrix.com',
+#  'http://yahoo.com',
+#  'http://www.google.com',
+#  ]
 
-        if self.finished:
-            self.output.write(data)
-        
-        return data
+with open('greencall/example.json', 'r') as infile:
+    wtf = json.load(infile)
+infile.close()
 
-    def connectionLost(self, reason):
-        self.finished.callback(None)
+urls = []
+for site in wtf:
+    urls.append(codecs.encode(site))
 
-        
-class ResourceOutput(object):
-    
-    def printResource(self, response, count):
-        finished = Deferred()
-
-        response.deliverBody(ResourcePrinter(finished, count))
-
-        return finished
-
-    def printError(self, failure):
-        print >>sys.stderr, failure
-
-    def stop(self, result):
-        reactor.stop()
-
-        
-class AgentMaker(object):
-
-    def __init__(self, sites):
-        self.ro = ResourceOutput()
-        self.sites = sites
-
-    def manageAgents(self):
-
-        #sites = ["https://www.google.com/", "https://www.yahoo.com/",
-         #        "https://www.google.com/", "https://www.yahoo.com/"]
-                 #"http://www.cnn.com/"]#, "http://www.msnbc.com/"]
-
+ 
+def listCallback(results):
+    with open('output.json','w') as outfile:
         count = 0
-        #deferreds = []
-        sem = DeferredSemaphore(10)
-        while count < len(sites):
-            agent = Agent(reactor)
-            d = sem.run(agent.request('GET', sites[count]))
-            d.addCallback(self.ro.printResource, count)
-            d.addErrback(self.ro.printError)
-            count += 1
+        ok = {}
+        logging.info('results available')
+        for isSuccess, result in results:
+            ok[count] = result
 
-            print "\n\nMischief count: %d" % count
-            #print "\n\nData_managed: %d" % len(self.data)
-
-        #print "muhData ", str(self.data.keys())
-        #print "sanity check: ", self.ro.data[1]
-        self.mischiefManaged(d)
-
-    def mischiefManaged(self, d):
-        d.addBoth(self.ro.stop)
-
-
-
-if __name__ == "__main__":
-
-    with open('greencall/example.json', 'r') as infile:
-        wtf = json.load(infile)
-    infile.close()
-
-    sites = []
-    for site in wtf:
-        sites.append(codecs.encode(site))
-        
-    am = AgentMaker(sites)
-    am.manageAgents()
-    
-    reactor.run()
+        json.dump(ok, outfile)
+            
+def finish(ign):
+    logging.info('process complete')
+    reactor.stop()
+ 
+def test():
+  deferreds = []
+  sem = defer.DeferredSemaphore(maxRun)
+  count = 0
+  for url in urls:
+    d = sem.run(getPage, url)
+    deferreds.append(d)
+    print "Number queries: %d" % count
+    count += 1
+  dl = defer.DeferredList(deferreds)
+  logging.info('deferreds added to list')
+  dl.addCallback(listCallback)
+  logging.info('list callback completed')
+  dl.addCallback(finish)
+  logging.info('finished callbacks')
 
 
+
+enable_log('crawlah')
+logging.info('crawlah started')
+test()
+reactor.run()
 
