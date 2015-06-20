@@ -5,6 +5,7 @@ Makes API requests in a timely manner then writes out the data
 """
 import sys
 import json
+import codecs
 import logging
 from time import gmtime, strftime
 
@@ -33,12 +34,10 @@ class ResourcePrinter(Protocol):
 
         if self.finished:
             self.output.write(data)
-            logging.info('dataRecieved written for: %d' % self.count)
         
         return data
 
     def connectionLost(self, reason):
-        logging.warn('connectionLost for %d' % self.count)
         self.finished.callback(None)
 
         
@@ -52,7 +51,8 @@ class ResourceOutput(object):
         return finished
 
     def printError(self, failure):
-        logging.error(sys.stderr, failure)
+        #logging.error(sys.stderr, failure)
+        logging.error('some print error went wrong')
         print >>sys.stderr, failure
 
     def stop(self, result):
@@ -79,8 +79,6 @@ class AgentMaker(object):
             d.addErrback(self.ro.printError)
             count += 1
 
-            logging.info("Mischief count: %d" % count)
-
         logging.info('manageAgents loop END')
         self.mischiefManaged(d)
 
@@ -94,8 +92,13 @@ with open('examples/test.json','r') as infile:
     sites = json.load(infile)
     infile.close()
 
+count = 0
+ascii_sites = []
+for site in sites:
+    clean = codecs.encode(site, 'ascii')
+    ascii_sites.append(clean)
 
-am = AgentMaker(sites)
+am = AgentMaker(ascii_sites)
 am.manageAgents()
 
 reactor.run()
