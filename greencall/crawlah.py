@@ -3,6 +3,8 @@
 Makes API requests in a timely manner then writes out the data
 
 """
+import sys
+import json
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredSemaphore
@@ -11,11 +13,27 @@ from twisted.web.client import Agent
 
 maxRun = 10
 
+class PersistData(object):
+
+    def __init__(self):
+        self.persistd = {}
+
+    def write(self, key, value):
+        self.persistd[key] = value
+
+    def read(self):
+        return self.persistd
+
+    def write_to_file(self, filepath):
+        with open(filepath, 'w') as infile:
+            json.dump(self.persistd, filepath)
+        infile.close()
+
 class ResourcePrinter(Protocol):
     def __init__(self, finished, count):
         self.finished = finished
         self.count = count
-        self.output = open('out' + str(self.count) +'_test.json', 'w')
+        self.output = open('output/out' + str(self.count) +'_test.json', 'w')
 
     def dataReceived(self, data):
 
@@ -44,7 +62,7 @@ class ResourceOutput(object):
         reactor.stop()
 
         
-class AgentMaker(object):
+class AgentMaker(PersistData):
 
     def __init__(self):
         self.data = {}
@@ -72,6 +90,7 @@ class AgentMaker(object):
 
         #print "muhData ", str(self.data.keys())
         #print "sanity check: ", self.ro.data[1]
+
         self.mischiefManaged(d)
 
     def mischiefManaged(self, d):
