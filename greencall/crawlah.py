@@ -3,11 +3,6 @@
 Makes API requests in a timely manner then writes out the data
 
 """
-import sys
-import json
-import codecs
-import logging
-from time import gmtime, strftime
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, DeferredSemaphore
@@ -16,42 +11,16 @@ from twisted.web.client import Agent
 
 maxRun = 10
 
-def enable_log(log_name):
-    """ Enable logs written to file """
-    log_name = strftime("%d_%b_%Y_%H%M%S", gmtime()) + log_name
-    logging.basicConfig(filename= log_name + ".log",
-                        level=logging.DEBUG,
-                        format='%(asctime)s %(levelname)s' +\
-                        ' %(message)s')
-
-class ManageData(object):
-    """ Manages data retrieved from the ResourcePrinter protocol """
-
-    def __init__(self):
-        self.request_data = {}
-        self.myfile = open('myfile.json','w')
-
-    def write_file(self, key, value):
-        self.myfile.write(value)
-        
-    def write(self, key, value):
-        self.request_data[key] = value
-
-    def read(self):
-        return self.request_data
-
-
-class ResourcePrinter(Protocol, ManageData):
-    
-    def __init__(self, finished, key):
+class ResourcePrinter(Protocol):
+    def __init__(self, finished, count):
         self.finished = finished
-        self.key = key
-    
+        self.count = count
+        self.output = open('out' + str(self.count) +'_test.json', 'w')
+
     def dataReceived(self, data):
 
         if self.finished:
-            self.write_file(key = self.key,
-                            value = data)
+            self.output.write(data)
         
         return data
 
@@ -59,20 +28,21 @@ class ResourcePrinter(Protocol, ManageData):
         self.finished.callback(None)
 
         
-class ResourceOutput(ManageData):
+class ResourceOutput(object):
     
-    def printResource(self, response, key):
+    def printResource(self, response, count):
         finished = Deferred()
 
-        response.deliverBody(ResourcePrinter(finished, key))
+        response.deliverBody(ResourcePrinter(finished, count))
 
         return finished
 
     def printError(self, failure):
         print >>sys.stderr, failure
 
-    def outputData(self, response):
-        print self.read()
+    def stop(self, result):
+        reactor.stop()
+
         
 class AgentMaker(object):
 
@@ -82,33 +52,37 @@ class AgentMaker(object):
 
     def manageAgents(self):
 
-        sites = ["https://github.com/","https://twitter.com/"]
+        sites = ["https://www.google.com/", "https://www.yahoo.com/",
+                 "https://www.google.com/", "https://www.yahoo.com/"]
+                 #"http://www.cnn.com/"]#, "http://www.msnbc.com/"]
 
         count = 0
         sem = DeferredSemaphore(maxRun)
-  
+        
         while count < len(sites):
             agent = Agent(reactor)
-            
             d = sem.run(agent.request, 'GET', sites[count])
+            #d = agent.request('GET', sites[count])
             d.addCallback(self.ro.printResource, count)
             d.addErrback(self.ro.printError)
-            #d.addCallback(self.ro.outputData)
-                        
             count += 1
 
-            print "Mischief count: %d" % count
+            print "\n\nMischief count: %d" % count
+            #print "\n\nData_managed: %d" % len(self.data)
 
-        d.addBoth(self.mischiefManaged)
+        #print "muhData ", str(self.data.keys())
+        #print "sanity check: ", self.ro.data[1]
+        self.mischiefManaged(d)
+
+    def mischiefManaged(self, d):
+        d.addBoth(self.ro.stop)
+
+
         
-    def mischiefManaged(self, result):
-        reactor.stop()
-
-
-
-enable_log('crawlah')
-logging.info('crawlah started')
-
 am = AgentMaker()
 am.manageAgents()
+
 reactor.run()
+
+
+
