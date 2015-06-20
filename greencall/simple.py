@@ -1,6 +1,8 @@
 import asyncio
 import aiohttp
 
+import time
+
 """
 @asyncio.coroutine
 def print_page(url):
@@ -35,17 +37,49 @@ def first_magnet(page):
 
 @asyncio.coroutine
 def print_magnet(query):
-    url = 'http://thepiratebay.se/search/{}/0/7/0'.format(query)
+    #url = 'http://thepiratebay.se/search/{}/0/7/0'.format(query)
+    url = query
     with (yield from sem):
-        page = yield from get(url, compress = True)
+        page = yield from get(url, compress = True)#, connector=connector)
     magnet = first_magnet(page)
-    print('{}: {}'.format(query, magnet))
+    #magnet = page
 
-distros = ['archlinux', 'ubuntu', 'debian']
+    #with open('simple.txt', 'w') as outfile:
+    #    outfile.write(magnet)
+    #outfile.close()
+    #print('{}: {}'.format(query, magnet))
+
+
+distros = ["https://www.google.com/", "https://www.yahoo.com/",
+        "http://www.cnn.com/", "http://www.msnbc.com/"]
+
+#start = time.time()
+#distros = ['archlinux', 'ubuntu', 'debian']
+#distros = ['debian']
 sem = asyncio.Semaphore(5)
 loop = asyncio.get_event_loop()
+#connector = aiohttp.TCPConnector(share_cookies=True, loop=loop)
 f = asyncio.wait([print_magnet(d) for d in distros])
 loop.run_until_complete(f)
+
+#loop = asyncio.get_event_loop()
+
+#tasks = [asyncio.async(print_magnet(d)) for d in distros]
+    
+#tasks = [
+#    asyncio.async([print_magnet(d) for d in distros]),
+#    asyncio.async(print_magnet(distros[1])),
+#    asyncio.async(print_magnet(distros[2]))]
+loop.run_until_complete(asyncio.wait(tasks))
+loop.close()
+
+#loop = asyncio.get_event_loop()
+
+#resp = yield from aiohttp.request('get', url, connector=connector)
+#asyncio.Task([print_magnet(d) for d in distros])
+#loop.close()
+
+#print("\n\ntime completed: {}".format(time.time() - start))
 
 # crawler example is recursively adding tasks & using semaphores
 # so they don't hit the server too hard. We might be able to add
@@ -58,6 +92,3 @@ loop.run_until_complete(f)
 #
 # let's make little to no assumptions for now about handling the
 # csv file since you know it's relatively clean.
-
-
-
