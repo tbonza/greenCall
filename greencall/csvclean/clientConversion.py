@@ -1,23 +1,25 @@
 """ Converts JSON file to client API format, retains unique id """
 
 import json
+import codecs
 import logging
+
+from greencall.clients.googleSearch import GoogleCustomSearch
 
 
 
 class ClientConversion(object):
     """ Converts JSON file to Client API format """
 
-    def __init__(self, clientclass, querystr):
+    def __init__(self, clientclass):
         """
         Args:
-          clientclass: class, Client API conversion class
+          clientmethod: method, Client API conversion method
           querystr: str, query string to be converted
         """
-        self.client = clientclass
-        self.q = querystr
+        self.convert = clientclass
 
-    def convertString(self, domethod):
+    def convertString(self, queryString):
         """ Returns client API request format 
         
         Args:
@@ -26,10 +28,10 @@ class ClientConversion(object):
         Returns:
           str, client API request format
         """
-        return self.client.domethod(self.q)
+        return self.convert.queryString()
 
 
-def runConversion(jsonpath, clientclass, domethod):
+def runConversion(jsonpath, secretKey):
     """ Converts JSON file to client API format 
 
     Args:
@@ -43,11 +45,20 @@ def runConversion(jsonpath, clientclass, domethod):
     with open(jsonpath, 'r') as jsonin:
         obs = json.load(jsonin)
         jsonin.close()
-
-    for key in obs.keys():
-        cc = ClientConversion(clientclass, obs[key])
         
-        obs[key] = cc.convertString(domethod)
+    for key in obs.keys():
+
+        gcs = GoogleCustomSearch(version = '1',
+                filtah = '1',
+                cx = '003891126258438650518:fcb7zxrqavu',
+                lr = 'lang_en',
+                exactTerms = 'asset',
+                q= obs[key],
+                dateRestrict = "'2012'",
+                secretKey = secretKey,
+                uniqueId = key)
+
+        obs[key] = codecs.encode(gcs.queryString())
 
     return obs
         

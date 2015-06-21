@@ -32,14 +32,16 @@ def read_csv(filepath):
     outputdict = {}
 
     with open(filepath, 'r') as csvfile:
-        csvreader = csv.reader(csvfile, delimiter=',')
+        csvreader = csv.reader(csvfile, delimiter=',',quotechar='"')
 
+        outputdict = {}
         header = True
-
         row_num = 0
-        while row_num < QUERY_LIMIT:
+        
+        for row in csvreader:
 
-            row = csvreader[row_num]
+            if row_num > QUERY_LIMIT:
+                break
 
             if header:
                 check_num_cols(row)

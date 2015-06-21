@@ -24,6 +24,7 @@ Params (helpful but not used):
   'gl'          : Geolocation of end user. (string)
    
 """
+import logging
 
 class GoogleCustomSearch(object):
     """ All params in __init__ are mandatory for now """
@@ -108,6 +109,9 @@ class GoogleCustomSearch(object):
 
             # add secret key (get it from Google Developer dashboard)
             make_query += 'key=' + self.secretKey
+
+            logging.info('Google custom search api request set: {}'\
+                         .format(self.uniqueId))
 
             return make_query
 
