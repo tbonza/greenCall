@@ -7,16 +7,20 @@ import sys
 import json
 import codecs
 import logging
-from time import gmtime, strftime
+from time import gmtime, strftime, sleep
 
 from twisted.internet import reactor
 from twisted.web.client import getPage
 from twisted.web.error import Error
 from twisted.internet.defer import DeferredList, DeferredSemaphore
 
-maxRun = 10
-# consider using an ordered dict for self.data; for now let's just
-# bang on it & see if things break
+MAX_RUN = 10 # number of requests 
+RATE_LIMIT = 1 # requests per second
+
+# consider using an ordered dict for self.data to match keys up with
+# results from 'results'.
+# There are several ways to make this go faster but for now we just
+# want to play nice with the APIs we have available.
 
 
 class getPages(object):
@@ -37,9 +41,17 @@ class getPages(object):
             #print "Successful: {}".format(isSuccess)
             #print "Output length: {}".format(len(result))
 
-        #for key in self.data.keys():
+        for value in self.data.values():
+            if value == False:
+                logging.debug("Found a dropped connection")
+            elif len(value) == 0:
+                logging.debug("Found a dropped connection; missing data")
             #print "key value: {}".format(key)
             #print "data value len: {}".format(len(self.data[key]))
+
+        with open('results.json','w') as outfile:
+            json.dump(self.data, outfile)
+            outfile.close()
 
     def pageCallback(self, result, key):
         ########### I added this, to hold the data:
@@ -60,12 +72,13 @@ class getPages(object):
     def start(self):
         """ get each page """
         deferreds = []
-        sem = DeferredSemaphore(maxRun)
+        sem = DeferredSemaphore(MAX_RUN)
         
         for key in self.book.keys():
             #logging.info(key)
             
             d =  sem.run(getPage, self.book[key])
+            sleep(RATE_LIMIT)
             d.addCallback(self.pageCallback, key)
             d.addErrback(self.errorHandler, key)
             deferreds.append(d)
