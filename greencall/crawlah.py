@@ -10,20 +10,13 @@ import logging
 from time import gmtime, strftime
 
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, DeferredSemaphore
-from twisted.internet.protocol import Protocol
-from twisted.web.client import Agent
+from twisted.web.client import getPage
+from twisted.web.error import Error
+from twisted.internet.defer import DeferredList, DeferredSemaphore
 
 maxRun = 10
-# use persistent connections: HTTPConnectionPool
-# don't return the body incrementally: readBody
-# catch a ResponseDone exception so we know what's working
-# Note that each request will only be retried once. (automatic)
-  # so use the ResponseDone exception to find out who needs to be rerun.
-
-# try what you have with the Google API first before making any additional
-# improvements. I'm concerned that you'll get it perfect only to have things
-# break again.
+# consider using an ordered dict for self.data; for now let's just
+# bang on it & see if things break
 
 def enable_log(log_name):
     """ Enable logs written to file """
@@ -33,85 +26,63 @@ def enable_log(log_name):
                         format='%(asctime)s %(levelname)s' +\
                         ' %(message)s')
 
-class ResourcePrinter(Protocol):
-    def __init__(self, finished, count):
-        self.finished = finished
-        self.count = count
-        self.output = open('output/out' + str(self.count) +'_test.json', 'w')
+class getPages(object):
+    """ Return contents from HTTP pages """
 
-    def dataReceived(self, data):
+    def __init__(self, book, logger=False):
+        self.book = book
+        self.data = {}
+        #util = Utility()
+        #if logger:
+        #    log = util.enable_log("crawler")
 
-        if self.finished:
-            self.output.write(data)
-        
-        return data
+    def listCallback(self, results):
+        for isSuccess, result in results:
+            print "Successful: {}".format(isSuccess)
+            print "Output length: {}".format(len(result))
 
-    def connectionLost(self, reason):
-        logging.warn("connectionLost: %d" % self.count)
-        self.finished.callback(None)
+        for key in self.data.keys():
+            print "key value: {}".format(key)
+            print "data value len: {}".format(len(self.data[key]))
 
-        
-class ResourceOutput(object):
-    
-    def printResource(self, response, count):
-        finished = Deferred()
+    def pageCallback(self, result, key):
+        ########### I added this, to hold the data:
+        self.data[key] = result
+        logging.info("Data appended")
+        return result
 
-        response.deliverBody(ResourcePrinter(finished, count))
+    def errorHandler(self,result, key):
+        # Bad thingy!
+        logging.error(result)
+        self.data[key] = False
+        logging.info("Appended False at %d" % len(self.data))
 
-        return finished
-
-    def printError(self, failure):
-        #logging.error(sys.stderr, failure)
-        logging.error('some print error went wrong')
-        print >>sys.stderr, failure
-
-    def stop(self, result):
-        logging.info('reactor stopped')
+    def finish(self, ign):
         reactor.stop()
 
-        
-class AgentMaker(object):
-
-    def __init__(self, sites):
-        self.ro = ResourceOutput()
-        self.sites = sites
-
-    def manageAgents(self):
-
-        count = 0
+    def start(self):
+        """ get each page """
+        deferreds = []
         sem = DeferredSemaphore(maxRun)
+        
+        for key in self.book.keys():
+            logging.info(key)
+            
+            d =  sem.run(getPage, self.book[key])
+            d.addCallback(self.pageCallback, key)
+            d.addErrback(self.errorHandler, key)
+            deferreds.append(d)
 
-        logging.info('manageAgents loop START')
-        while count < len(self.sites):
-            agent = Agent(reactor)
-            d = sem.run(agent.request, 'GET', self.sites[count])
-            d.addCallback(self.ro.printResource, count)
-            d.addErrback(self.ro.printError)
-            count += 1
+        dl = DeferredList(deferreds)
+        dl.addCallback(self.listCallback)
+        dl.addCallback(self.finish)
 
-        logging.info('manageAgents loop END')
-        self.mischiefManaged(d)
-
-    def mischiefManaged(self, d):
-        d.addBoth(self.ro.stop)
-
-
+            
+        
+    
+    
 enable_log('crawlah')
-
-with open('examples/test.json','r') as infile:
-    sites = json.load(infile)
-    infile.close()
-
-count = 0
-ascii_sites = []
-for site in sites:
-    clean = codecs.encode(site, 'ascii')
-    ascii_sites.append(clean)
-
-am = AgentMaker(ascii_sites)
-am.manageAgents()
-
+gp = getPages({'12345':'http://tbonza.github.io/',
+               '45678':'https://twitter.com/'})
+gp.start()
 reactor.run()
-
-
-
