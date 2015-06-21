@@ -18,13 +18,6 @@ maxRun = 10
 # consider using an ordered dict for self.data; for now let's just
 # bang on it & see if things break
 
-def enable_log(log_name):
-    """ Enable logs written to file """
-    log_name = strftime("%d_%b_%Y_%H%M%S", gmtime()) + log_name
-    logging.basicConfig(filename= log_name + ".log",
-                        level=logging.DEBUG,
-                        format='%(asctime)s %(levelname)s' +\
-                        ' %(message)s')
 
 class getPages(object):
     """ Return contents from HTTP pages """
@@ -81,20 +74,3 @@ class getPages(object):
         dl.addCallback(self.listCallback)
         dl.addCallback(self.finish)
 
-            
-        
-    
-    
-enable_log('crawlah')
-
-with open('examples/testkitten.json', 'r') as infile:
-    testkitten = json.load(infile)
-
-for key in testkitten.keys():
-    testkitten[key] = codecs.encode(testkitten[key])
-    
-
-logging.info("crawlah STARTED")
-gp = getPages(testkitten)
-gp.start()
-reactor.run()
