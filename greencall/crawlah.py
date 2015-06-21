@@ -38,17 +38,20 @@ class getPages(object):
 
     def listCallback(self, results):
         for isSuccess, result in results:
-            print "Successful: {}".format(isSuccess)
-            print "Output length: {}".format(len(result))
 
-        for key in self.data.keys():
-            print "key value: {}".format(key)
-            print "data value len: {}".format(len(self.data[key]))
+            if not isSuccess:
+                logging.error("Retrieval was unsuccessful")
+            #print "Successful: {}".format(isSuccess)
+            #print "Output length: {}".format(len(result))
+
+        #for key in self.data.keys():
+            #print "key value: {}".format(key)
+            #print "data value len: {}".format(len(self.data[key]))
 
     def pageCallback(self, result, key):
         ########### I added this, to hold the data:
         self.data[key] = result
-        logging.info("Data appended")
+        #logging.info("Data appended")
         return result
 
     def errorHandler(self,result, key):
@@ -58,6 +61,7 @@ class getPages(object):
         logging.info("Appended False at %d" % len(self.data))
 
     def finish(self, ign):
+        logging.info("reactored stopped")
         reactor.stop()
 
     def start(self):
@@ -66,7 +70,7 @@ class getPages(object):
         sem = DeferredSemaphore(maxRun)
         
         for key in self.book.keys():
-            logging.info(key)
+            #logging.info(key)
             
             d =  sem.run(getPage, self.book[key])
             d.addCallback(self.pageCallback, key)
@@ -82,7 +86,11 @@ class getPages(object):
     
     
 enable_log('crawlah')
-gp = getPages({'12345':'http://tbonza.github.io/',
-               '45678':'https://twitter.com/'})
+
+with open('examples/testkitten.json', 'r') as infile:
+    testkitten = json.load(infile)
+
+logging.info("crawlah STARTED")
+gp = getPages(testkitten)
 gp.start()
 reactor.run()
