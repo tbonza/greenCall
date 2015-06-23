@@ -43,7 +43,7 @@ class ElasticsearchDocument(object):
         return esformat
         
         
-def map_documents(results_dict, esformat):
+def map_documents(results_dict, esformat, account, es_id):
     """ Maps the results dictionary to elasticsearch documents 
 
     This is currently only tested on results from the Google Custom
@@ -54,7 +54,7 @@ def map_documents(results_dict, esformat):
     Args:
         results_dict: Results returned from API, read from JSON
         esformat: document format template
-        account_no: (int:account number, str:account holder)
+        account: (int:account number, str:account holder)
 
     Returns:
         list of dictionaries in elasticsearch doc format ready for
@@ -62,8 +62,6 @@ def map_documents(results_dict, esformat):
 
     """
     documents = []
-    es_id = 1 # assumes a new index is being created
-    count = 0
 
     a = []
     ac = ApiConversion()
@@ -72,27 +70,45 @@ def map_documents(results_dict, esformat):
 
     while conversion:
 
+        _esformat = esformat.copy()
+
         doc = conversion.pop()
-        
-        esformat["_id"] = es_id
-        esformat["_source"] = { doc.keys()[0] : doc[doc.keys()[0]] }
 
+        account_number, account_holder = account
+        ed = ElasticsearchDocument(es_id = es_id,
+                                   source = { doc.keys()[0] : \
+                                              doc[doc.keys()[0]] },
+                                   account_number = account_number,
+                                   account_holder = account_holder)
 
-        documents.append(esformat)
-
-        esformat["_id"] = None
-        esformat["_source"] = ""
+        documents.append(ed.esFormatGetter(_esformat))
 
         es_id += 1
-        count += 1
 
     return documents
 
-        
-    
+def prepare_all_documents(jsondict):
+    """ Prepare results returned for each account as bulk upload """
+    actions = []
 
-    
-    
+    for key in results.keys():
+        
+        #results[key] = convert_content(results[key])
+        
+        if results[key] == False:
+            results[key] = ""
+
+            action = {
+                "_index": "google-custom-search",
+                "_type": 'search',
+                "_id": key,
+                "_source": results[key]
+            }
+        
+        actions.append(action)
+
+    return actions
+
 
 def load_elastic(resultspath):
     """ Load elasticsearch with output from 'results.json' """
@@ -101,23 +117,7 @@ def load_elastic(resultspath):
     
     results = read_json(resultspath)
 
-    actions = []
-
-    for key in results.keys():
-
-        #results[key] = convert_content(results[key])
-
-        if results[key] == False:
-            results[key] = ""
-
-        action = {
-            "_index": "google-custom-search",
-            "_type": 'search',
-            "_id": key,
-            "_source": results[key]
-            }
-        
-        actions.append(action)
+    actions = prepare_all_documents(results)
 
     # load elasticsearch in bulk
     helpers.bulk(es, actions)
