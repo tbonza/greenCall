@@ -34,6 +34,7 @@ class getPages(object):
         #    log = util.enable_log("crawler")
 
     def littleHammer(self):
+        """ Requests should equal 1 per second """
 
         for key in self.book.keys():
             pass
