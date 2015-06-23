@@ -23,6 +23,26 @@ def convert_content(value):
     """ Convert dictionary values to json as well """
     return json.loads(value)
 
+class ElasticsearchDocument(object):
+
+    def __init__(self, es_id, source, account_number,
+                 account_holder):
+        
+        self.es_id = es_id
+        self.source = source
+        self.account_number = account_number
+        self.account_holder = account_holder
+
+    def esFormatGetter(self, esformat):
+
+        esformat["_id"] = self.es_id
+        esformat["_source"] = self.source
+        esformat["_source"]["account_number"] = self.account_number
+        esformat["_source"]["account_holder"] = self.account_holder
+
+        return esformat
+        
+        
 def map_documents(results_dict, esformat):
     """ Maps the results dictionary to elasticsearch documents 
 
@@ -34,6 +54,7 @@ def map_documents(results_dict, esformat):
     Args:
         results_dict: Results returned from API, read from JSON
         esformat: document format template
+        account_no: (int:account number, str:account holder)
 
     Returns:
         list of dictionaries in elasticsearch doc format ready for
@@ -49,21 +70,23 @@ def map_documents(results_dict, esformat):
     ac.myfunk(results_dict)
     conversion = ac.documents
 
-    #while conversion:
+    while conversion:
+
+        doc = conversion.pop()
         
-        #doc = conversion.pop(conversion.keys()[count], None)
+        esformat["_id"] = es_id
+        esformat["_source"] = { doc.keys()[0] : doc[doc.keys()[0]] }
 
-        #esformat["_id"] = es_id
-        #esformat["_source"] = {conversion.keys()[count] : doc }
 
-        #documents.append(esformat)
+        documents.append(esformat)
 
-        #esformat["_id"] = None
-        #esformat["_source"] = ""
+        esformat["_id"] = None
+        esformat["_source"] = ""
 
-        #count += 1
+        es_id += 1
+        count += 1
 
-    return conversion
+    return documents
 
         
     
