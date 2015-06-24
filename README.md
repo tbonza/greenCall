@@ -16,3 +16,11 @@ $ cd greenCall && trial tests/
 ```
 
 Check out the examples folder for ```okgo.py``` & ```okload.py```
+
+``` Shell
+$ cp examples/okload.py .
+$ pwd
+  /my/home/greenCall
+$ python okload.py
+
+```
