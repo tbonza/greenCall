@@ -6,6 +6,7 @@ allow you to bulk load Elasticsearch.
 """
 import json
 import logging
+import codecs
 
 from elasticsearch import Elasticsearch
 from elasticsearch import helpers
@@ -67,7 +68,20 @@ def map_documents(results_dict, esformat, account, es_id):
 
     a = []
     ac = ApiConversion()
-    ac.myfunk(results_dict)
+
+    # nasty data handler
+    if type(results_dict) != bool:
+        results_dict = codecs.encode(results_dict, 'ascii','ignore')
+        results_dict = json.loads(results_dict)
+
+        if type(results_dict) == dict:
+
+            ac.myfunk(results_dict)
+
+        else:
+            print('fuck: {}'.format(type(results_dict)))
+            print('string contents: {}'.format(results_dict))    
+        
     conversion = ac.documents
 
     while conversion:
@@ -110,20 +124,31 @@ def prepare_all_documents(jsondict, esformat, accountdict):
 
     for key in jsondict.keys():
 
-        if key not in accountdict:
-            logging.error("Account {} missing from CSV input file."\
-                          .format(key))
-            logging.info("Documents associated with {} will not be " +\
-                         "loaded into elasticsearch".format(key))
+        #if key not in accountdict:
+            #logging.error("Account {} missing from CSV input file."\
+            #              .format(key))
+            #logging.info("Documents associated with {} will not be " +\
+            #             "loaded into elasticsearch".format(key))
+         #   pass
 
-        else:
+        #else:
+
+        if key in accountdict:
+            #key = int(key)
+            #jsondict[key] = codecs.encode(jsondict[key])
+
             actions += map_documents(results_dict = jsondict[key],
                                      esformat = esformat,
-                                     account = (key,accountdict[key]),
+                                     account = (key,
+                                                accountdict[key]),
                                      es_id = es_id)
+        else:
+            print("key not found: {}".format(key))
+            
+        print len(actions)
 
         es_id += 1
-    
+
     return actions
 
 

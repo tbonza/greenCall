@@ -20,7 +20,7 @@ import json
 import codecs
 import logging
 
-QUERY_LIMIT = 40
+QUERY_LIMIT = 20
 
 def check_num_cols(row):
     """ Ensure csv is of the format [unique_id, query] """

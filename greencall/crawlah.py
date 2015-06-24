@@ -14,7 +14,7 @@ from twisted.web.client import getPage
 from twisted.web.error import Error
 from twisted.internet.defer import DeferredList, DeferredSemaphore
 
-MAX_RUN = 40 # number of requests 
+MAX_RUN = 20 # number of requests 
 RATE_LIMIT = 1 # requests per second
 
 # consider using an ordered dict for self.data to match keys up with
