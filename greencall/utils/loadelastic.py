@@ -5,11 +5,13 @@ After running the example in 'okgo.py' your output will be
 allow you to bulk load Elasticsearch.
 """
 import json
+import logging
 
 from elasticsearch import Elasticsearch
 from elasticsearch import helpers
 
 from greencall.utils.bobby import ApiConversion
+from greencall.csvclean.inputCsv import read_csv
 
 def read_json(resultspath):
 
@@ -87,37 +89,52 @@ def map_documents(results_dict, esformat, account, es_id):
 
     return documents
 
-def prepare_all_documents(jsondict):
-    """ Prepare results returned for each account as bulk upload """
+#def merge_csv_input(filepath):
+#    """ Merge csv input file to get account information, returns dict """
+#    accountdict = read_csv(filepath)   
+
+def prepare_all_documents(jsondict, esformat, accountdict):
+    """ Prepare results returned for each account as bulk upload 
+
+    Args:
+        jsondict: results returned from API
+        esformat: elasticsearch document format
+        accountdict: read_csv(filepath) from csvclean utils
+        
+    Returns:
+        List, ready for bulk upload into elasticsearch
+
+    """
     actions = []
+    es_id = 1 # assumes new index
 
-    for key in results.keys():
-        
-        #results[key] = convert_content(results[key])
-        
-        if results[key] == False:
-            results[key] = ""
+    for key in jsondict.keys():
 
-            action = {
-                "_index": "google-custom-search",
-                "_type": 'search',
-                "_id": key,
-                "_source": results[key]
-            }
-        
-        actions.append(action)
+        if key not in accountdict:
+            logging.error("Account {} missing from CSV input file."\
+                          .format(key))
+            logging.info("Documents associated with {} will not be " +\
+                         "loaded into elasticsearch".format(key))
 
+        else:
+            actions += map_documents(results_dict = jsondict[key],
+                                     esformat = esformat,
+                                     account = (key,accountdict[key]),
+                                     es_id = es_id)
+
+        es_id += 1
+    
     return actions
 
 
-def load_elastic(resultspath):
+def load_elastic(resultspath, esformat, accountdict):
     """ Load elasticsearch with output from 'results.json' """
     
     es = Elasticsearch()
     
     results = read_json(resultspath)
 
-    actions = prepare_all_documents(results)
+    actions = prepare_all_documents(results, esformat, accountdict)
 
     # load elasticsearch in bulk
     helpers.bulk(es, actions)

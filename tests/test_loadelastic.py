@@ -4,7 +4,8 @@ from twisted.trial import unittest
 
 from greencall.utils.loadelastic import (read_json, convert_content,
                                          load_elastic, map_documents,
-                                         ElasticsearchDocument)
+                                         ElasticsearchDocument,
+                                         prepare_all_documents)
 
 class TestElasticBulkLoad(unittest.TestCase):
     """ Test bulk load for elasticsearch python client """
@@ -35,6 +36,20 @@ class TestElasticBulkLoad(unittest.TestCase):
         self.account = (123456, "Forrest Gump")
 
         self.es_id = 1
+
+        self.jsondict = {123456 : {"content": "foo", 
+          "results": {"result_one": {"persona": "phone",
+                                     "personb":  "phone",
+                                     "personc":  "phone"
+                                    },
+                      "result_two": ["thing1",
+                                     "thing2",
+                                     "thing3"
+                                    ],
+                      "result_three": "none"
+                     },
+          "query": ["Taylor Swift", "Bob Dole", "Rocketman"]
+        }}
 
     def tearDown(self):
         pass
@@ -104,6 +119,31 @@ class TestElasticBulkLoad(unittest.TestCase):
                           123456)
         self.assertEquals(temp[8]["_source"]["account_holder"],
                           "Forrest Gump")
+
+    def test_prepare_all_documents(self):
+        """ Test stack of prepared documents for elasticsearch """
+
+        account_no, account_holder = self.account 
+        
+        temp = prepare_all_documents(jsondict = self.jsondict,
+                                     esformat = self.esformat,
+                                     accountdict = \
+                                     {account_no: account_holder})
+
+        # sanity check, should be 9 documents
+        self.assertEquals(len(temp), 9)
+
+        # check data type
+        self.assertTrue(type(temp) is list)
+
+        # double check data type
+        self.assertEquals(temp[0]["_id"], 1)
+        self.assertEquals(temp[0]["_source"]["account_number"],
+                          123456)
+
+        
+
+    
 
         
 
