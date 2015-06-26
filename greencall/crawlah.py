@@ -138,7 +138,8 @@ class getPages(object):
         sem = DeferredSemaphore(MAX_RUN)
         
         for key in self.book.keys():
-            
+
+            sleep(RATE_LIMIT)
             d =  sem.run(getPage, self.book[key])
             d.addCallback(self.pageCallback, key)
             d.addErrback(self.errorHandler, key)
