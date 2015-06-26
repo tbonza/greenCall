@@ -9,7 +9,6 @@ import codecs
 import logging
 from time import gmtime, strftime, sleep, time
 
-import requests
 from twisted.internet import reactor
 from twisted.web.client import getPage
 from twisted.web.error import Error
