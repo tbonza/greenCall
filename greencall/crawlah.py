@@ -14,15 +14,18 @@ from twisted.web.client import getPage
 from twisted.web.error import Error
 from twisted.internet.defer import DeferredList, DeferredSemaphore
 
-MAX_RUN = 20 # number of requests 
-RATE_LIMIT = 1 # requests per second
+#MAX_RUN = 20 # number of requests 
+#RATE_LIMIT = 1 # requests per second
 
 class getPages(object):
     """ Return contents from HTTP pages """
 
-    def __init__(self, book, logger=False):
+    def __init__(self, book, MAX_RUN, RATE_LIMIT, logger=False):
         self.book = book
         self.data = {}
+        self.MAX_RUN = MAX_RUN
+        self.RATE_LIMIT = RATE_LIMIT
+        
 
     def listCallback(self, results):
         for isSuccess, result in results:
@@ -68,11 +71,11 @@ class getPages(object):
     def start(self):
         """ get each page """
         deferreds = []
-        sem = DeferredSemaphore(MAX_RUN)
+        sem = DeferredSemaphore(self.MAX_RUN)
         
         for key in self.book.keys():
 
-            sleep(RATE_LIMIT)
+            sleep(self.RATE_LIMIT)
             d =  sem.run(getPage, self.book[key])
             d.addCallback(self.pageCallback, key)
             d.addErrback(self.errorHandler, key)
