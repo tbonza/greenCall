@@ -145,7 +145,7 @@ def prepare_all_documents(jsondict, esformat, accountdict):
         else:
             print("key not found: {}".format(key))
             
-        print len(actions)
+        #print len(actions)
 
         es_id += 1
 
