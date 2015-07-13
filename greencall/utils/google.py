@@ -35,7 +35,6 @@ Create:
   'searchTime': 0.161848,
   'formattedSearchTime': "0.16",
   'totalResults': '0',
-  'formattedTotalResults': '0'
 }
   
 If at least 1 search result exists then a seperate ES document will
@@ -68,7 +67,7 @@ def define_meta_es_doc(pydict, meta_info):
     
     meta_es_doc['account_holder'] = holder
     meta_es_doc['account_number'] = number
-    meta_es_doc['kind'] = None
+    meta_es_doc['kind'] = pydict['kind']
     meta_es_doc['template'] = None # mark as raw
     meta_es_doc['title'] = None
     meta_es_doc['totalResults'] = None
@@ -85,8 +84,7 @@ def define_meta_es_doc(pydict, meta_info):
     meta_es_doc['searchTime'] = None
     meta_es_doc['formattedSearchTime'] = None
     meta_es_doc['totalResults'] = None
-    meta_es_doc['formattedTotalResults'] = None
-
+    
     return meta_es_doc
 
 def define_result_es_doc(pydict, meta_info):
@@ -108,15 +106,12 @@ def parse_google_json(pydict, meta_info):
 
     parsed = []
 
-    if True:
-        parsed.append(define_meta_es_doc(pydict, meta_info))
+    parsed.append(define_meta_es_doc(pydict, meta_info))
 
-    elif False:
-        for result in results:
-            parsed.append(define_result_es_doc(pydict, meta_info))
+    for result in pydict['items']:
+        parsed.append(define_result_es_doc(pydict=result,
+                                           meta_info= meta_info))
 
-    else:
-        pass
 
     return parsed
 
