@@ -104,23 +104,45 @@ def define_result_es_doc(pydict, meta_info):
 
     return res_es_doc
 
-def create_google_es_docs(jsonpath, account):
+def parse_google_json(pydict, meta_info):
 
-    resultsdict = read_json(jsonpath)
-    meta_info = account
+    parsed = []
 
+    if True:
+        parsed.append(define_meta_es_doc(pydict, meta_info))
+
+    elif False:
+        for result in results:
+            parsed.append(define_result_es_doc(pydict, meta_info))
+
+    else:
+        pass
+
+    return parsed
+
+    
+
+
+def create_google_es_docs(resultsdict, accountdict):
+    """
+    Args:
+        resultsdict: read_json(jsonpath)
+        accountdict: read_csv(inputpath)
+    """
     esdocs = []
 
     for key in resultsdict.keys():
 
-        if key is True:
-            esdocs.append(define_meta_es_doc(pydict, meta_info))
+        if key in accountdict:
 
-        elif key is False:
-            esdocs.append(define_result_es_doc(pydict, meta_info))
+            meta_info = accountdict[key]
+            
+            esdocs += parse_google_json(pydict, meta_info)
 
+        
         else:
-            pass
+            logging.warning("key missing from parsed results: {}"\
+                            .format(key))
 
     return esdocs
 
