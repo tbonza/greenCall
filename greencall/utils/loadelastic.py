@@ -71,8 +71,17 @@ def map_documents(results_dict, esformat, account, es_id):
 
     # nasty data handler
     if type(results_dict) != bool:
-        results_dict = codecs.encode(results_dict, 'ascii','ignore')
-        results_dict = json.loads(results_dict)
+
+        # I'm not sure why I was encoding this; like you really can't
+        # encode a dictionary. Unless I was passing it a string and then
+        # turning that string into a dictionary with json.loads.
+
+        # This code needs to get refactored anyways so I'm not going to
+        # modify it.'Mister Grouse' will be the last version with this
+        # logic.
+        
+        #results_dict = codecs.encode(results_dict, 'ascii','ignore')
+        #results_dict = json.loads(results_dict)
 
         if type(results_dict) == dict:
 
@@ -137,11 +146,16 @@ def prepare_all_documents(jsondict, esformat, accountdict):
             #key = int(key)
             #jsondict[key] = codecs.encode(jsondict[key])
 
-            actions += map_documents(results_dict = jsondict[key],
-                                     esformat = esformat,
-                                     account = (key,
-                                                accountdict[key]),
-                                     es_id = es_id)
+            try:
+
+                actions += map_documents(results_dict = jsondict[key],
+                                         esformat = esformat,
+                                         account = (key,
+                                                    accountdict[key]),
+                                         es_id = es_id)
+            except TypeError:
+                logging.error("TypeError: {}".format(key))
+                
         else:
             print("key not found: {}".format(key))
             

@@ -96,10 +96,10 @@ class TestElasticBulkLoad(unittest.TestCase):
 
         temp = map_documents(self.results_dict, self.esformat,
                              self.account, self.es_id)
-
+        
         # sanity check on list length
         self.assertEquals(len(temp), 9)
-
+        
         # check elasticsearch id
         self.assertEquals(temp[8]["_id"], 9)
         self.assertEquals(temp[7]["_id"], 8)
@@ -107,7 +107,7 @@ class TestElasticBulkLoad(unittest.TestCase):
 
         # check _type
         self.assertEquals(temp[0]["_type"], "website")
-
+        
         # check _index
         self.assertEquals(temp[5]["_index"], "customsearch")
 
@@ -116,10 +116,11 @@ class TestElasticBulkLoad(unittest.TestCase):
 
         # check account info
         self.assertEquals(temp[8]["_source"]["account_number"],
-                          123456)
+                              123456)
         self.assertEquals(temp[8]["_source"]["account_holder"],
-                          "Forrest Gump")
+                          "Forrest Gump")       
 
+        
     def test_prepare_all_documents(self):
         """ Test stack of prepared documents for elasticsearch """
 
