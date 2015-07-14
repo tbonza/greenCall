@@ -56,34 +56,54 @@ Returns:
 
 """
 import logging
+import json
 
-from greencall.loadelastic import read_json
+from greencall.utils.loadelastic import read_json
 
 
-def define_meta_es_doc(pydict, meta_info):
+def define_meta_es_doc(valuedict, meta_info):
+    """
+    Args:
+        valuedict: json.loads(pydict[key])
+        meta_info: tuple, (account holder, account number)
+
+    Returns:
+        dictionary for meta es doc values
+    """
     meta_es_doc = {}
 
     holder, number = meta_info
     
     meta_es_doc['account_holder'] = holder
     meta_es_doc['account_number'] = number
-    meta_es_doc['kind'] = pydict['kind']
-    meta_es_doc['template'] = None # mark as raw
-    meta_es_doc['title'] = None
-    meta_es_doc['totalResults'] = None
-    meta_es_doc['searchTerms'] = None
-    meta_es_doc['count'] = None
-    meta_es_doc['language'] = None
-    meta_es_doc['inputEncoding'] = None
-    meta_es_doc['outputEncoding'] = None
-    meta_es_doc['safe'] = None
-    meta_es_doc['cx'] = None
-    meta_es_doc['filter'] = None
-    meta_es_doc['exactTerms'] = None
-    meta_es_doc['dateRestrict'] = None
-    meta_es_doc['searchTime'] = None
-    meta_es_doc['formattedSearchTime'] = None
-    meta_es_doc['totalResults'] = None
+    meta_es_doc['kind'] = valuedict['kind']
+    # mark as raw
+    meta_es_doc['template'] = valuedict['url']['template']
+    meta_es_doc['title'] = valuedict['queries']['request'][0]['title']
+    meta_es_doc['totalResults'] = valuedict['queries']['request']\
+                                  [0]['totalResults']
+    meta_es_doc['searchTerms'] = valuedict['queries']['request']\
+                                 [0]['searchTerms']
+    meta_es_doc['count'] = valuedict['queries']['request'][0]['count']
+    meta_es_doc['language'] = valuedict['queries']['request'][0]\
+                              ['language']
+    meta_es_doc['inputEncoding'] = valuedict['queries']['request']\
+                                   [0]['inputEncoding']
+    meta_es_doc['outputEncoding'] = valuedict['queries']['request'][0]\
+                                    ['outputEncoding']
+    meta_es_doc['safe'] = valuedict['queries']['request'][0]['safe']
+    meta_es_doc['cx'] = valuedict['queries']['request'][0]['cx']
+    meta_es_doc['filter'] = valuedict['queries']['request'][0]['filter']
+    meta_es_doc['exactTerms'] = valuedict['queries']['request']\
+                                [0]['exactTerms']
+    meta_es_doc['dateRestrict'] = valuedict['queries']['request']\
+                                  [0]['dateRestrict']
+    meta_es_doc['searchTime'] = valuedict['searchInformation']\
+                                ['searchTime']
+    meta_es_doc['formattedSearchTime'] = valuedict['searchInformation']\
+                                         ['formattedSearchTime']
+    meta_es_doc['totalResults'] = valuedict['searchInformation']\
+                                  ['totalResults']
     
     return meta_es_doc
 
@@ -94,11 +114,11 @@ def define_result_es_doc(pydict, meta_info):
 
     res_es_doc['account_holder'] = holder
     res_es_doc['account_number'] = number
-    res_es_doc['kind'] = None
-    res_es_doc['cx'] = None
-    res_es_doc['title'] = None
-    res_es_doc['link'] = None
-    res_es_doc['snippet'] = None
+    res_es_doc['kind'] = valuedict['kind']
+    res_es_doc['cx'] = valuedict['queries']['request'][0]['cx']
+    res_es_doc['title'] = valuedict['items'][0]['title']
+    res_es_doc['link'] = valuedict['items'][0]['link']
+    res_es_doc['snippet'] = valuedict['items'][0]['snippet']
 
     return res_es_doc
 
@@ -114,8 +134,6 @@ def parse_google_json(pydict, meta_info):
 
 
     return parsed
-
-    
 
 
 def create_google_es_docs(resultsdict, accountdict):

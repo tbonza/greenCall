@@ -44,6 +44,13 @@ class ElasticsearchDocument(object):
         esformat["_source"]["account_holder"] = self.account_holder
 
         return esformat
+
+
+
+def set_schema(esSchema):
+    """ Set index schema for es """
+    # this should write the schema to es
+    return esSchema
         
         
 def map_documents(results_dict, esformat, account, es_id):
