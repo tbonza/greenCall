@@ -119,10 +119,6 @@ def map_documents(results_dict, esformat, account, es_id):
 
     return documents
 
-#def merge_csv_input(filepath):
-#    """ Merge csv input file to get account information, returns dict """
-#    accountdict = read_csv(filepath)   
-
 def prepare_all_documents(jsondict, esformat, accountdict):
     """ Prepare results returned for each account as bulk upload 
 
@@ -184,5 +180,15 @@ def load_elastic(resultspath, esformat, accountdict):
 
     # load elasticsearch in bulk
     helpers.bulk(es, actions)
+
+def load_elastic(es_formatted_list):
+    es = Elasticsearch()
+    actions = iter(es_formatted_list)
+    helpers.bulk(es,actions)
+
+def write_json(es_formatted_list, filepath):
+    with open(filepath, 'w') as outfile:
+        json.dump(es_formatted_list, outfile)
+        outfile.close()
 
 

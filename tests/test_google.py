@@ -158,6 +158,18 @@ class TestGoogleEsLoader(unittest.TestCase):
         
         # two meta documents & 20 search results
         self.assertEquals(len(output), 22)
+
+    def test_create_google_es_docs(self):
+        """ Walk through data structure """
+        output = create_google_es_docs(self.resultsdict,
+                                       self.accountdict,
+                                       self.esformat,
+                                       self.es_id)
+
+        self.assertEquals(output[0]['_index'], 'customsearch')
+        self.assertEquals(output[0]['_type'], 'website')
+        self.assertEquals(output[0]['_id'], 11) # LIFO
+        self.assertEquals(output[1]['_id'], 11)
                           
 
 

@@ -125,21 +125,29 @@ def define_result_es_doc(valuedict, meta_info, index):
 def parse_google_json(valuedict, meta_info, esformat, es_id):
 
     parsed = []
+    _esformat = esformat.copy()
 
-    esformat['_id'] = es_id
-    esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
+    _esformat['_id'] = es_id
+    _esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
 
-    parsed.append(esformat)
+    print('meta wtf: {}'.format(_esformat['_id']))
+
+    parsed.append(_esformat)
+    #print("meta: {}".format(es_id))
     es_id += 1
 
     index = 0
     while index < len(valuedict['items']):
 
-        esformat['_id'] = es_id
-        esformat['_source'] = define_result_es_doc(valuedict,
+        _esformat['_id'] = es_id
+        _esformat['_source'] = define_result_es_doc(valuedict,
                                                    meta_info, index)
-        parsed.append(esformat)
+
+        print('result wtf: {}'.format(_esformat['_id']))
+        parsed.append(_esformat)
         index += 1
+        print("result: {}".format(es_id))
+        print("es result: {}".format(_esformat['_id']))
         es_id += 1
 
     return parsed
@@ -156,14 +164,29 @@ def create_google_es_docs(resultsdict, accountdict, esformat, es_id):
 
     for key in resultsdict.keys():
 
+        key = str(key)
+
+        _esformat = esformat.copy()
+
         if key in accountdict:
 
             try:
 
                 meta_info = accountdict[key]
 
+                start = len(esdocs)
+
                 esdocs += parse_google_json(resultsdict[key], meta_info,
-                                            esformat, es_id)
+                                            _esformat, es_id)
+
+                print('esdocs wtf: {}'.format(esdocs['_id']))
+
+                print('esdocs id: {}'.format(esdocs[len(esdocs) -1 ]\
+                                             ['_id']))
+                
+                es_id += len(esdocs) - start
+                
+                
 
             except TypeError:
                 logging.error("TypeError: {}".format(key))
@@ -174,8 +197,6 @@ def create_google_es_docs(resultsdict, accountdict, esformat, es_id):
 
     return esdocs
 
-def create_google_es_index():
-    pass
 
             
             
