@@ -170,9 +170,19 @@ class TestGoogleEsLoader(unittest.TestCase):
         self.assertEquals(output[0]['_index'], 'customsearch')
         self.assertEquals(output[0]['_type'], 'website')
 
-        # should be 1
-        self.assertEquals(output[0]['_id'], 11) # LIFO
+    def test_update_es_doc_id(self):
+        """ Make sure the ES id is correct """
+        output = self.gp.update_es_doc_id(self.resultsdict,
+                                          self.accountdict,
+                                          self.esformat)
+
+        self.assertEquals(output[12]['_id'], 13)
+        self.assertEquals(output[0]['_id'], 1)
         self.assertEquals(output[21]['_id'], 22)
+        self.assertEquals(output[15]['_id'], 16)
+
+        
+
         
                           
 

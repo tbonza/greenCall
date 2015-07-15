@@ -58,6 +58,7 @@ Returns:
 import logging
 import json
 import codecs
+from itertools import count
 
 from greencall.utils.loadelastic import read_json
 
@@ -133,19 +134,19 @@ class GoogleParse(object):
         parsed = []
         _esformat = esformat.copy()
 
-        _esformat['_id'] = self.es_id
+        #_esformat['_id'] = int(self.es_id)
         _esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
 
         #print('meta wtf: {}'.format(_esformat['_id']))
         
         parsed.append(_esformat)
         #print("meta: {}".format(es_id))
-        self.es_id += 1
+        #self.es_id += 1
         
         index = 0
         while index < len(valuedict['items']):
 
-            _esformat['_id'] = self.es_id
+            #_esformat['_id'] = int(self.es_id)
             _esformat['_source'] = define_result_es_doc(valuedict,
                                                         meta_info, index)
 
@@ -154,10 +155,9 @@ class GoogleParse(object):
             index += 1
             #print("result: {}".format(es_id))
             #print("es result: {}".format(_esformat['_id']))
-            self.es_id += 1
+            #self.es_id += 1
 
         return parsed
-
 
     def create_google_es_docs(self, resultsdict, accountdict, esformat):
         """
@@ -196,6 +196,26 @@ class GoogleParse(object):
                                 .format(key))
 
         return esdocs
+
+    def update_es_doc_id(self, resultsdict, accountdict, esformat):
+        """ Updates the es doc id using a generator """
+        docs = self.create_google_es_docs(resultsdict, accountdict,
+                                          esformat)
+        num_docs = len(docs)
+        itercount = count(self.es_id)
+        docs_ready = []
+
+        for doc in docs:
+
+            _doc = doc.copy()
+
+            _doc['_id'] = itercount.next()
+            docs_ready.append(_doc)
+
+        return docs_ready
+
+            
+
     
 
 
