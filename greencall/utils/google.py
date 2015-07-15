@@ -107,7 +107,7 @@ def define_meta_es_doc(valuedict, meta_info):
     
     return meta_es_doc
 
-def define_result_es_doc(pydict, meta_info):
+def define_result_es_doc(valuedict, meta_info):
     res_es_doc = {}
 
     holder, number = meta_info
@@ -122,14 +122,15 @@ def define_result_es_doc(pydict, meta_info):
 
     return res_es_doc
 
-def parse_google_json(pydict, meta_info):
+def parse_google_json(valuedict, meta_info):
 
     parsed = []
 
-    parsed.append(define_meta_es_doc(pydict, meta_info))
+    parsed.append(define_meta_es_doc(valuedict, meta_info))
 
-    for result in pydict['items']:
-        parsed.append(define_result_es_doc(pydict=result,
+    
+    for result in valuedict:
+        parsed.append(define_result_es_doc(valuedict=result,
                                            meta_info= meta_info))
 
 
@@ -150,7 +151,7 @@ def create_google_es_docs(resultsdict, accountdict):
 
             meta_info = accountdict[key]
             
-            esdocs += parse_google_json(pydict, meta_info)
+            esdocs += parse_google_json(resultsdict, meta_info)
 
         
         else:
