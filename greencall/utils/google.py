@@ -78,7 +78,7 @@ def define_meta_es_doc(valuedict, meta_info):
     
     meta_es_doc['account_holder'] = holder
     meta_es_doc['account_number'] = number
-    meta_es_doc['kind'] = valuedict['kind']
+    meta_es_doc['kind'] = valuedict['kind'] 
     # mark as raw
     meta_es_doc['template'] = valuedict['url']['template']
     meta_es_doc['title'] = valuedict['queries']['request'][0]['title']
@@ -134,28 +134,20 @@ class GoogleParse(object):
         parsed = []
         _esformat = esformat.copy()
 
-        #_esformat['_id'] = int(self.es_id)
         _esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
-
-        #print('meta wtf: {}'.format(_esformat['_id']))
         
         parsed.append(_esformat)
-        #print("meta: {}".format(es_id))
-        #self.es_id += 1
         
         index = 0
         while index < len(valuedict['items']):
 
-            #_esformat['_id'] = int(self.es_id)
+            _esformat = esformat.copy()
+
             _esformat['_source'] = define_result_es_doc(valuedict,
                                                         meta_info, index)
 
-            #print('result wtf: {}'.format(_esformat['_id']))
             parsed.append(_esformat)
             index += 1
-            #print("result: {}".format(es_id))
-            #print("es result: {}".format(_esformat['_id']))
-            #self.es_id += 1
 
         return parsed
 
@@ -172,24 +164,24 @@ class GoogleParse(object):
             
             key = codecs.encode(str(key))
         
-            #print('key type: {}'.format(type(key)))
-
             _esformat = esformat.copy()
             
             if key in accountdict:
 
-                try:
+                #try:
 
-                    meta_info = accountdict[key]
+                    meta_info = (accountdict[key], key)
 
-
-                    parsed = self.parse_google_json(resultsdict[key],
+                    result = json.loads(codecs.encode(resultsdict[key],
+                                                      'ascii','ignore'))
+                    
+                    parsed = self.parse_google_json(result,
                                                     meta_info,
                                                     _esformat)
                     esdocs.extend(parsed)
                     
-                except TypeError:
-                    logging.error("TypeError: {}".format(key))
+                #except TypeError:
+                #    logging.error("TypeError: {}".format(key))
         
             else:
                 logging.warning("key missing from parsed results: {}"\
