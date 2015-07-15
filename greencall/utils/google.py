@@ -107,7 +107,7 @@ def define_meta_es_doc(valuedict, meta_info):
     
     return meta_es_doc
 
-def define_result_es_doc(valuedict, meta_info):
+def define_result_es_doc(valuedict, meta_info, index):
     res_es_doc = {}
 
     holder, number = meta_info
@@ -116,9 +116,9 @@ def define_result_es_doc(valuedict, meta_info):
     res_es_doc['account_number'] = number
     res_es_doc['kind'] = valuedict['kind']
     res_es_doc['cx'] = valuedict['queries']['request'][0]['cx']
-    res_es_doc['title'] = valuedict['items'][0]['title']
-    res_es_doc['link'] = valuedict['items'][0]['link']
-    res_es_doc['snippet'] = valuedict['items'][0]['snippet']
+    res_es_doc['title'] = valuedict['items'][index]['title']
+    res_es_doc['link'] = valuedict['items'][index]['link']
+    res_es_doc['snippet'] = valuedict['items'][index]['snippet']
 
     return res_es_doc
 
@@ -128,10 +128,10 @@ def parse_google_json(valuedict, meta_info):
 
     parsed.append(define_meta_es_doc(valuedict, meta_info))
 
-    
-    for result in valuedict:
-        parsed.append(define_result_es_doc(valuedict=result,
-                                           meta_info= meta_info))
+    index = 0
+    while index < len(valuedict['items']):
+        parsed.append(define_result_es_doc(valuedict, meta_info, index))
+        index += 1
 
 
     return parsed
