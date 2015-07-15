@@ -122,26 +122,35 @@ def define_result_es_doc(valuedict, meta_info, index):
 
     return res_es_doc
 
-def parse_google_json(valuedict, meta_info):
+def parse_google_json(valuedict, meta_info, esformat, es_id):
 
     parsed = []
 
-    parsed.append(define_meta_es_doc(valuedict, meta_info))
+    esformat['_id'] = es_id
+    esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
+
+    parsed.append(esformat)
+    es_id += 1
 
     index = 0
     while index < len(valuedict['items']):
-        parsed.append(define_result_es_doc(valuedict, meta_info, index))
-        index += 1
 
+        esformat['_id'] = es_id
+        esformat['_source'] = define_result_es_doc(valuedict,
+                                                   meta_info, index)
+        parsed.append(esformat)
+        index += 1
+        es_id += 1
 
     return parsed
 
 
-def create_google_es_docs(resultsdict, accountdict):
+def create_google_es_docs(resultsdict, accountdict, esformat, es_id):
     """
     Args:
         resultsdict: read_json(jsonpath)
         accountdict: read_csv(inputpath)
+        esformat: dict, contains index info for ES
     """
     esdocs = []
 
@@ -149,16 +158,24 @@ def create_google_es_docs(resultsdict, accountdict):
 
         if key in accountdict:
 
-            meta_info = accountdict[key]
-            
-            esdocs += parse_google_json(resultsdict, meta_info)
+            try:
 
+                meta_info = accountdict[key]
+
+                esdocs += parse_google_json(resultsdict[key], meta_info,
+                                            esformat, es_id)
+
+            except TypeError:
+                logging.error("TypeError: {}".format(key))
         
         else:
             logging.warning("key missing from parsed results: {}"\
                             .format(key))
 
     return esdocs
+
+def create_google_es_index():
+    pass
 
             
             
