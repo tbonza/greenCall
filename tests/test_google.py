@@ -170,6 +170,14 @@ class TestGoogleEsLoader(unittest.TestCase):
         self.assertEquals(output[0]['_index'], 'customsearch')
         self.assertEquals(output[0]['_type'], 'website')
 
+    def test_sanity_update_es_doc_id(self):
+        """ Sanity check for data type """
+        output = self.gp.update_es_doc_id(self.resultsdict,
+                                          self.accountdict,
+                                          self.esformat)
+        
+        self.assertEquals(type(output), list)
+
     def test_update_es_doc_id(self):
         """ Make sure the ES id is correct """
         output = self.gp.update_es_doc_id(self.resultsdict,
