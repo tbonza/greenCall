@@ -8,8 +8,7 @@ from tests.data.test_api_results import (account_11111157,
 
 from greencall.utils.google import (define_meta_es_doc,
                                     define_result_es_doc,
-                                    parse_google_json,
-                                    create_google_es_docs)
+                                    GoogleParse)
 
 class TestGoogleParser(unittest.TestCase):
     """ Test parsing functionality for google parser """
@@ -29,6 +28,7 @@ class TestGoogleParser(unittest.TestCase):
         }
 
         self.es_id = 1
+        self.gp = GoogleParse(es_id = 1)
 
     def tearDown(self):
         pass
@@ -74,15 +74,17 @@ class TestGoogleParser(unittest.TestCase):
 
     def test_sanity_parse_google_json(self):
         """ Sanity check for data type """
-        output = parse_google_json(self.valuedict, self.meta_info,
-                                   self.esformat, self.es_id)
+        output = self.gp.parse_google_json(self.valuedict,
+                                           self.meta_info,
+                                           self.esformat)
 
         self.assertEquals(type(output), list)
 
     def test_parse_google_json(self):
         """ Walk through data structure """
-        output = parse_google_json(self.valuedict, self.meta_info,
-                                   self.esformat, self.es_id)
+        output = self.gp.parse_google_json(self.valuedict,
+                                           self.meta_info,
+                                           self.esformat)
         
         self.assertEquals(type(output.pop()), dict)
 
@@ -105,8 +107,8 @@ class TestGoogleParser(unittest.TestCase):
                           'Phone, Public Records - Radaris')
 
     def test_length_parse_google_json(self):
-        output = parse_google_json(self.valuedict, self.meta_info,
-                                   self.esformat, self.es_id)
+        output = self.gp.parse_google_json(self.valuedict, self.meta_info,
+                                           self.esformat)
 
         # 11 is 1 meta document & 10 search result documents
         self.assertEquals(len(output), 11)
@@ -138,6 +140,7 @@ class TestGoogleEsLoader(unittest.TestCase):
         }
 
         self.es_id = 1
+        self.gp = GoogleParse(es_id = 1)
 
     def tearDown(self):
         pass
@@ -147,10 +150,9 @@ class TestGoogleEsLoader(unittest.TestCase):
 
     def test_sanity_create_google_es_docs(self):
         """ Sanity check for data type """
-        output = create_google_es_docs(self.resultsdict,
+        output = self.gp.create_google_es_docs(self.resultsdict,
                                        self.accountdict,
-                                       self.esformat,
-                                       self.es_id)
+                                       self.esformat)
 
         # list items are dicts
         self.assertEquals(type(output), list)
@@ -161,15 +163,17 @@ class TestGoogleEsLoader(unittest.TestCase):
 
     def test_create_google_es_docs(self):
         """ Walk through data structure """
-        output = create_google_es_docs(self.resultsdict,
-                                       self.accountdict,
-                                       self.esformat,
-                                       self.es_id)
+        output = self.gp.create_google_es_docs(self.resultsdict,
+                                               self.accountdict,
+                                               self.esformat)
 
         self.assertEquals(output[0]['_index'], 'customsearch')
         self.assertEquals(output[0]['_type'], 'website')
+
+        # should be 1
         self.assertEquals(output[0]['_id'], 11) # LIFO
-        self.assertEquals(output[1]['_id'], 11)
+        self.assertEquals(output[21]['_id'], 22)
+        
                           
 
 

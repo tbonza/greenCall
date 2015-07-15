@@ -57,6 +57,7 @@ Returns:
 """
 import logging
 import json
+import codecs
 
 from greencall.utils.loadelastic import read_json
 
@@ -122,80 +123,80 @@ def define_result_es_doc(valuedict, meta_info, index):
 
     return res_es_doc
 
-def parse_google_json(valuedict, meta_info, esformat, es_id):
+class GoogleParse(object):
 
-    parsed = []
-    _esformat = esformat.copy()
+    def __init__(self, es_id):
+        self.es_id = es_id
 
-    _esformat['_id'] = es_id
-    _esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
+    def parse_google_json(self, valuedict, meta_info, esformat):
 
-    print('meta wtf: {}'.format(_esformat['_id']))
-
-    parsed.append(_esformat)
-    #print("meta: {}".format(es_id))
-    es_id += 1
-
-    index = 0
-    while index < len(valuedict['items']):
-
-        _esformat['_id'] = es_id
-        _esformat['_source'] = define_result_es_doc(valuedict,
-                                                   meta_info, index)
-
-        print('result wtf: {}'.format(_esformat['_id']))
-        parsed.append(_esformat)
-        index += 1
-        print("result: {}".format(es_id))
-        print("es result: {}".format(_esformat['_id']))
-        es_id += 1
-
-    return parsed
-
-
-def create_google_es_docs(resultsdict, accountdict, esformat, es_id):
-    """
-    Args:
-        resultsdict: read_json(jsonpath)
-        accountdict: read_csv(inputpath)
-        esformat: dict, contains index info for ES
-    """
-    esdocs = []
-
-    for key in resultsdict.keys():
-
-        key = str(key)
-
+        parsed = []
         _esformat = esformat.copy()
 
-        if key in accountdict:
+        _esformat['_id'] = self.es_id
+        _esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
 
-            try:
-
-                meta_info = accountdict[key]
-
-                start = len(esdocs)
-
-                esdocs += parse_google_json(resultsdict[key], meta_info,
-                                            _esformat, es_id)
-
-                print('esdocs wtf: {}'.format(esdocs['_id']))
-
-                print('esdocs id: {}'.format(esdocs[len(esdocs) -1 ]\
-                                             ['_id']))
-                
-                es_id += len(esdocs) - start
-                
-                
-
-            except TypeError:
-                logging.error("TypeError: {}".format(key))
+        #print('meta wtf: {}'.format(_esformat['_id']))
         
-        else:
-            logging.warning("key missing from parsed results: {}"\
-                            .format(key))
+        parsed.append(_esformat)
+        #print("meta: {}".format(es_id))
+        self.es_id += 1
+        
+        index = 0
+        while index < len(valuedict['items']):
 
-    return esdocs
+            _esformat['_id'] = self.es_id
+            _esformat['_source'] = define_result_es_doc(valuedict,
+                                                        meta_info, index)
+
+            #print('result wtf: {}'.format(_esformat['_id']))
+            parsed.append(_esformat)
+            index += 1
+            #print("result: {}".format(es_id))
+            #print("es result: {}".format(_esformat['_id']))
+            self.es_id += 1
+
+        return parsed
+
+
+    def create_google_es_docs(self, resultsdict, accountdict, esformat):
+        """
+        Args:
+          resultsdict: read_json(jsonpath)
+          accountdict: read_csv(inputpath)
+          esformat: dict, contains index info for ES
+        """
+        esdocs = []
+
+        for key in resultsdict.keys():
+            
+            key = codecs.encode(str(key))
+        
+            #print('key type: {}'.format(type(key)))
+
+            _esformat = esformat.copy()
+            
+            if key in accountdict:
+
+                try:
+
+                    meta_info = accountdict[key]
+
+
+                    parsed = self.parse_google_json(resultsdict[key],
+                                                    meta_info,
+                                                    _esformat)
+                    esdocs.extend(parsed)
+                    
+                except TypeError:
+                    logging.error("TypeError: {}".format(key))
+        
+            else:
+                logging.warning("key missing from parsed results: {}"\
+                                .format(key))
+
+        return esdocs
+    
 
 
             
