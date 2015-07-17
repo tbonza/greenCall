@@ -129,16 +129,9 @@ class GoogleParse(object):
     def __init__(self, es_id):
         self.es_id = es_id
 
-    def parse_google_json(self, valuedict, meta_info, esformat):
-
-        parsed = []
-        _esformat = esformat.copy()
-
-        _esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
-        
-        parsed.append(_esformat)
-        
+    def parse_google_items(self, valuedict, meta_info, esformat):
         index = 0
+        parsed = []
         while index < len(valuedict['items']):
 
             _esformat = esformat.copy()
@@ -149,6 +142,24 @@ class GoogleParse(object):
             parsed.append(_esformat)
             index += 1
 
+        return parsed
+
+        
+
+    def parse_google_json(self, valuedict, meta_info, esformat):
+
+        parsed = []
+        _esformat = esformat.copy()
+
+        _esformat['_source'] = define_meta_es_doc(valuedict, meta_info)
+        
+        parsed.append(_esformat)
+
+        if 'items' in valuedict:
+            parsed.extend(self.parse_google_items(valuedict,
+                                                  meta_info, esformat))
+        
+        
         return parsed
 
     def create_google_es_docs(self, resultsdict, accountdict, esformat):
