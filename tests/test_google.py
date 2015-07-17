@@ -3,8 +3,7 @@
 from twisted.trial import unittest
 
 from tests.data.test_value import values
-from tests.data.test_api_results import (account_11111157,
-                                         account_11111143)
+from tests.data.test_api_results import data_11111135, data_11111346
 
 from greencall.utils.google import (define_meta_es_doc,
                                     define_result_es_doc,
@@ -103,8 +102,7 @@ class TestGoogleParser(unittest.TestCase):
         # unique search api info
         self.assertEquals(output[0]['_source']\
                           ['title'],
-                          'Kellie Dixon - Address, '+\
-                          'Phone, Public Records - Radaris')
+                          'Google Custom Search - Kelley Mote')
 
     def test_length_parse_google_json(self):
         output = self.gp.parse_google_json(self.valuedict, self.meta_info,
@@ -123,11 +121,11 @@ class TestGoogleEsLoader(unittest.TestCase):
         #self.valuedict = values
         #self.meta_info = ("Mister Grouse","123456789")
 
-        self.account_11111157 = account_11111157
-        self.account_11111143 = account_11111143
+        self.account_11111157 = data_11111135
+        self.account_11111143 = data_11111346
 
-        self.resultsdict = {'11111157' : account_11111157,
-                            '11111143' : account_11111143 }
+        self.resultsdict = {'11111157' : data_11111135,
+                            '11111143' : data_11111346 }
 
         self.accountdict = {'11111157' : ('Mister Grouse', '11111157'),
                             '11111143' : ('Taylor Swift', '11111143')}
