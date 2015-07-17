@@ -179,7 +179,7 @@ class GoogleParse(object):
             
             if key in accountdict:
 
-                #try:
+                try:
 
                     meta_info = (accountdict[key], key)
 
@@ -191,8 +191,8 @@ class GoogleParse(object):
                                                     _esformat)
                     esdocs.extend(parsed)
                     
-                #except TypeError:
-                #    logging.error("TypeError: {}".format(key))
+                except TypeError:
+                    logging.error("TypeError: {}".format(key))
         
             else:
                 logging.warning("key missing from parsed results: {}"\
