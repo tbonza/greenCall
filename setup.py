@@ -28,7 +28,7 @@ setup(
         "pyOpenSSL==0.15.1",
         "service-identity==14.0.0",
         "six==1.9.0",
-        "Twisted==15.2.1",
+        "Twisted==19.7.0",
         "zope.interface==4.1.2",
         ],
 )
