@@ -10,7 +10,7 @@ oauth2client==1.4.11
 pyasn1==0.1.7
 pyasn1-modules==0.0.5
 pycparser==2.14
-pyOpenSSL==0.15.1
+pyOpenSSL==17.5.0
 rsa==3.1.4
 service-identity==14.0.0
 simplejson==3.7.3

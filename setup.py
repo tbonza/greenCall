@@ -25,7 +25,7 @@ setup(
         "pyasn1==0.1.7",
         "pyasn1-modules==0.0.5",
         "pycparser==2.14",
-        "pyOpenSSL==0.15.1",
+        "pyOpenSSL==17.5.0",
         "service-identity==14.0.0",
         "six==1.9.0",
         "Twisted==15.2.1",
