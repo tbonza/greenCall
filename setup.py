@@ -18,7 +18,7 @@ setup(
     install_requires=[
         "cffi==1.1.2",
         "characteristic==14.3.0",
-        "cryptography==0.9.1",
+        "cryptography==3.2",
         "enum34==1.0.4",
         "idna==2.0",
         "ipaddress==1.0.7",
